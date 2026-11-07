@@ -19,6 +19,10 @@ pub enum Error {
     Invalid(&'static str),
     /// The image has more pixels than the caller allows.
     TooLarge,
+    /// The read's budget refused what the file asks: why.
+    Budget(String),
+    /// The decode was cancelled.
+    Cancelled,
 }
 
 impl Error {
@@ -34,6 +38,18 @@ impl fmt::Display for Error {
             Error::Unsupported(what) => write!(f, "unsupported JPEG: {what}"),
             Error::Invalid(what) => write!(f, "invalid JPEG request: {what}"),
             Error::TooLarge => write!(f, "JPEG image exceeds the pixel limit"),
+            Error::Budget(why) => write!(f, "JPEG image: {why}"),
+            Error::Cancelled => write!(f, "JPEG decoding cancelled"),
+        }
+    }
+}
+
+/// What the read's budget refused, or its cancellation.
+impl From<kinogaki_studio_api::Error> for Error {
+    fn from(e: kinogaki_studio_api::Error) -> Self {
+        match e.is_cancelled() {
+            true => Error::Cancelled,
+            false => Error::Budget(e.message().to_owned()),
         }
     }
 }

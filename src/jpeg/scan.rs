@@ -5,9 +5,13 @@ use crate::jpeg::coefficients::Blocks;
 use crate::jpeg::headers::{Frame, Scan, ZIGZAG};
 use crate::jpeg::huffman::{Bits, END_OF_BLOCK, Table};
 use std::ops::Range;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// What a scan decoder needs of the frame and its tables.
 pub(crate) struct ScanContext<'t> {
+    /// Raised once the decode is no longer wanted: polled every row of
+    /// MCUs.
+    pub stop: &'t AtomicBool,
     /// Per scan component: frame index, sampling factors, blocks across
     /// and down covered (one-component scans), and its tables.
     pub components: Vec<ScanComponent<'t>>,
@@ -34,7 +38,7 @@ impl<'t> ScanContext<'t> {
     pub fn new(
         frame: &Frame,
         scan: &Scan,
-        tables: &'t [Option<Box<Table>>; 8],
+        (tables, stop): (&'t [Option<Box<Table>>; 8], &'t AtomicBool),
         restart: usize,
         at: usize,
     ) -> Result<Self, Error> {
@@ -65,6 +69,7 @@ impl<'t> ScanContext<'t> {
             (frame.mcux, frame.mcuy)
         };
         Ok(ScanContext {
+            stop,
             components,
             mcux,
             mcuy,
@@ -155,6 +160,9 @@ pub(crate) fn decode_mcus(
     blocks: &mut Blocks,
     span: Span,
 ) -> Result<(), Error> {
+    if context.stop.load(Ordering::Relaxed) {
+        return Err(Error::Cancelled);
+    }
     if let (Kind::Sequential, true, Blocks::Mcu { data, shape, first }) =
         (kind, context.interleaved(), &mut *blocks)
     {
@@ -164,6 +172,9 @@ pub(crate) fn decode_mcus(
     }
     let fail = |what, bits: &Bits| Error::corrupt(what, bits.pos);
     for m in span.mcus.clone() {
+        if m % context.mcux == 0 && context.stop.load(Ordering::Relaxed) {
+            return Err(Error::Cancelled);
+        }
         if span.restarts_before(context, m) {
             bits.restart(cursor.expected)
                 .map_err(|what| fail(what, bits))?;
@@ -523,7 +534,9 @@ fn refine(bits: &mut Bits, block: &mut [i16; 64], mut positions: u64, p1: i16, m
         positions &= positions - 1;
         let coefficient = &mut block[ZIGZAG[k] & 63];
         if bits.bit() && *coefficient & p1 == 0 {
-            *coefficient += if *coefficient >= 0 { p1 } else { m1 };
+            // Wrapping, as libjpeg's 16-bit coefficients do: a hostile
+            // first scan can leave -32768 here.
+            *coefficient = coefficient.wrapping_add(if *coefficient >= 0 { p1 } else { m1 });
         }
     }
 }

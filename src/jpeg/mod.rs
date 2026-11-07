@@ -6,8 +6,10 @@
 //! channels (1 grey or 3 RGB), [`decode_rgba8`] 8-bit RGBA; both can
 //! scale to 1/2, 1/4 or 1/8 straight from the DCT. Decoding runs on the
 //! process's workers (the SDK's): restart intervals entropy-decode in
-//! parallel, and the IDCT and color conversion run in bands.
-//! [`icc_profile`] joins an embedded ICC profile.
+//! parallel, and the IDCT and color conversion run in bands. A decode
+//! takes a read budget (the SDK's `ReadBudget`, the one thing of the SDK
+//! it takes besides the workers), which what a file claims is checked
+//! against. [`icc_profile`] joins an embedded ICC profile.
 //!
 //! [`encode`] writes baseline JPEGs from grey or color images at a
 //! quality, with 4:4:4, 4:2:2 or 4:2:0 chroma, optional restart markers
@@ -41,6 +43,7 @@ pub use encode::{EncodeOptions, Subsampling, encode};
 pub use error::Error;
 pub use icc::icc_profile;
 pub use kinogaki_image::{Image, Samples};
+use kinogaki_studio_api::format::ReadBudget;
 
 /// A JPEG's size and coding, from its frame header.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -64,13 +67,17 @@ impl Info {
 }
 
 /// How a decode runs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct DecodeOptions {
     /// 1, 2, 4 or 8: decode at 1/`scale` of the full size, straight from
     /// the DCT (each pixel the mean of the full-size pixels it covers).
     pub scale: u8,
     /// The most pixels (full size) a picture may have.
     pub max_pixels: u64,
+    /// What the decode may spend, and its cancellation: the coefficients
+    /// and the pixels are charged to it before they are allocated, and the
+    /// entropy decoding polls it every row of blocks.
+    pub budget: ReadBudget,
 }
 
 impl Default for DecodeOptions {
@@ -78,6 +85,7 @@ impl Default for DecodeOptions {
         Self {
             scale: 1,
             max_pixels: 1 << 30,
+            budget: ReadBudget::default(),
         }
     }
 }

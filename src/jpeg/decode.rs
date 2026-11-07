@@ -18,6 +18,7 @@ use crate::jpeg::parallel::map;
 use crate::jpeg::render::{self, Plan};
 use crate::jpeg::scan::{Cursor, Kind, ScanContext, Span, decode_mcus};
 use crate::jpeg::{DecodeOptions, Error};
+use kinogaki_studio_api::format::ReadBudget;
 use std::sync::Mutex;
 
 /// A decoded picture: 8-bit samples, `step` a pixel.
@@ -64,6 +65,8 @@ pub(crate) fn decode(data: &[u8], options: &DecodeOptions, rgba: bool) -> Result
         rendered: None,
     };
     let mut r = Reader::new(data, 2);
+    let budget = &options.budget;
+    let stop = budget.cancel().shared_flag();
     let step_of = |frame: &Frame| {
         if rgba {
             4
@@ -91,6 +94,8 @@ pub(crate) fn decode(data: &[u8], options: &DecodeOptions, rgba: bool) -> Result
                 if frame.width as u64 * frame.height as u64 > options.max_pixels {
                     return Err(Error::TooLarge);
                 }
+                let (width, height) = (frame.width.div_ceil(scale), frame.height.div_ceil(scale));
+                budget.allocate((width * height * step_of(&frame)) as u64)?;
                 s.progress = vec![[-1; 64]; frame.components.len()];
                 s.frame = Some(frame);
             }
@@ -130,7 +135,10 @@ pub(crate) fn decode(data: &[u8], options: &DecodeOptions, rgba: bool) -> Result
                     .as_ref()
                     .ok_or(Error::corrupt("scan before the frame header", at))?;
                 let scan = Scan::parse(payload, start, frame, &mut s.progress)?;
-                let context = ScanContext::new(frame, &scan, &s.tables, s.restart, start)?;
+                let context = ScanContext::new(frame, &scan, (&s.tables, &stop), s.restart, start)?;
+                if s.store.is_none() && s.rendered.is_none() {
+                    coefficients(frame, data.len(), budget)?;
+                }
                 let entropy = r.pos;
                 let whole = scan.components.len() == frame.components.len();
                 r.pos = if !frame.progressive && whole && s.store.is_none() && s.rendered.is_none()
@@ -194,6 +202,21 @@ pub(crate) fn decode(data: &[u8], options: &DecodeOptions, rgba: bool) -> Result
         step,
         pixels,
     })
+}
+
+/// Checks the coefficients `frame` keeps against `budget` before they are
+/// allocated, `input` the file's length. Every block a file codes takes at
+/// least a bit (its DC difference's code), so a file of `input` bytes codes
+/// at most 8 blocks a byte, 1,024 bytes of coefficients: a file claiming a
+/// frame larger than that holds can't be one.
+fn coefficients(frame: &Frame, input: usize, budget: &ReadBudget) -> Result<(), Error> {
+    let blocks = |c: &crate::jpeg::headers::Component| (c.actual_bx * c.actual_by) as u64;
+    let coded: u64 = frame.components.iter().map(blocks).sum();
+    budget.expand(input as u64, coded * 128)?;
+    let mask = if frame.progressive { 8 } else { 0 };
+    let kept = (frame.components.iter()).map(|c| (c.bx * c.by * (128 + mask)) as u64);
+    budget.allocate(kept.sum())?;
+    Ok(())
 }
 
 fn ids(frame: &Frame) -> Vec<u8> {

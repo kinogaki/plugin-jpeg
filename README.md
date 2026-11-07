@@ -8,6 +8,8 @@ The library crate is `kinogaki-jpeg-format`; `plugin/` (`kinogaki-plugin-jpeg`) 
 
 One layer, `""`: `Y` or `R G B` of 8-bit samples (CMYK and YCCK converted to RGB), tagged with the file's ICC profile, else nothing said. A file in memory (an embedded one) reads as one on disk.
 
+A file is read as the SDK's policy for untrusted files says (Studio's `docs/plugins/FORMAT.md`): its size (2²⁸ pixels at most), its coefficients (refused when the frame codes more blocks than the file has bits for, a bit a block at least) and its pixels are checked against the read's budget before they are allocated, as is the Image, and the decode polls the read's cancellation every row of blocks.
+
 ## Writing
 
 The main layer (`""`, else the first) as 8-bit grey or color at the `quality` (1–100) and chroma `subsampling` (4:4:4, 4:2:2, 4:2:0) the options name; colors premultiplied by alpha are divided by it, then alpha is left out. A profile the host tags it with is embedded; the sRGB display is JPEG's own assumption and needs none. Alpha, other layers, a tag a JPEG can't hold and further images are left out, each said once. The writer is display-referred: a host gives it a display's code values.
@@ -19,11 +21,12 @@ The main layer (`""`, else the first) as 8-bit grey or color at the `quality` (1
 | `src/lib.rs` | The package and the format |
 | `src/read.rs` | A JPEG to one Image |
 | `src/write.rs` | One Image to a JPEG, and the writer's options |
-| `src/jpeg/` | The codec, knowing no SDK but the process's workers ([docs/CODEC.md](docs/CODEC.md)) |
+| `src/jpeg/` | The codec, knowing no SDK but the process's workers and the read budget ([docs/CODEC.md](docs/CODEC.md)) |
 
 ## Tests and data
 
 - `tests/decode.rs`, `tests/encode.rs`: the codec against libjpeg-turbo ([docs/CODEC.md](docs/CODEC.md#tests-and-oracles)).
+- `tests/hostile.rs`: hostile files made in code, read as Import reads them, each a clean error or a picture within seconds: a progressive refinement past 16 bits (once a panic), a frame larger than its file can code, a picture past a small budget, a cancelled read.
 - `tests/format.rs`: files read as the codec decodes them on any number of workers, tagged with their profile; an Image written as the codec encodes it, with its profile; alpha and a named space said and left out; damaged and truncated files fail without panicking.
 - `examples/jpeg_bench.rs` times the codec.
 

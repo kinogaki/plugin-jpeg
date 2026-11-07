@@ -11,7 +11,7 @@ Decoding:
 - Greyscale, YCbCr, RGB (component IDs `R`, `G`, `B` or Adobe transform 0), CMYK, Adobe-inverted CMYK and YCCK (Adobe transform 2), converted to RGB.
 - Output as the picture's channels (1 or 3) or RGBA; reduced decodes at 1/2, 1/4 and 1/8 straight from the DCT.
 - ICC profiles from APP2 segments, joined as libjpeg-turbo joins them.
-- Truncated or corrupt files fail with the byte offset of the problem.
+- Truncated or corrupt files fail with the byte offset of the problem. A decode takes a read budget (`DecodeOptions::budget`): the pixels are charged at the frame header, the coefficients at the first scan's (refused when the frame codes more blocks than the file holds bits, at least one a block), and the entropy decoding polls its cancellation every row of blocks. A refinement past 16 bits wraps, as libjpeg's 16-bit coefficients do.
 
 Encoding: baseline from 8-bit grey, grey and alpha, RGB or RGBA (alpha dropped); quality 1–100 (Annex K tables scaled as IJG does); 4:4:4, 4:2:2, 4:2:0; a restart marker after every MCU row; optimized Huffman tables; an embedded ICC profile.
 

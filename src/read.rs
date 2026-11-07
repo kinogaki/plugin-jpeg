@@ -8,16 +8,26 @@ use std::sync::Arc;
 /// The most pixels a file may have (2²⁸).
 const MAX_PIXELS: u64 = 1 << 28;
 
-/// `input` as one item holding its Image, named after the file.
+/// `input` as one item holding its Image, named after the file: decoded
+/// within the read's budget (its coefficients and pixels charged before
+/// they are allocated, the Image too), stopping when it is cancelled.
 pub(crate) fn read(input: &Input<'_>, reading: &Reading<'_>) -> Result<Imported, Error> {
     reading.check()?;
     let bytes = input.bytes()?;
-    let at = |e: jpeg::Error| Error::invalid(format!("{input}: {e}"));
+    let at = |e: jpeg::Error| match e {
+        jpeg::Error::Cancelled => Error::cancelled(),
+        e => Error::invalid(format!("{input}: {e}")),
+    };
     let options = DecodeOptions {
         max_pixels: MAX_PIXELS,
+        budget: reading.budget.clone(),
         ..Default::default()
     };
     let decoded = jpeg::decode(&bytes, &options).map_err(at)?;
+    // The Image's copy of the pixels.
+    let held = u64::from(decoded.width) * u64::from(decoded.height);
+    let held = held * u64::from(decoded.channels);
+    reading.budget.allocate(held).map_err(|e| at(e.into()))?;
     let tag = match jpeg::icc_profile(&bytes).map_err(at)? {
         Some(profile) => ColorTag::Icc(profile.into()),
         None => ColorTag::Unknown { linear: false },
