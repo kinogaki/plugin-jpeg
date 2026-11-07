@@ -20,7 +20,7 @@ pub(crate) struct Writer;
 
 impl FormatWriter for Writer {
     fn accepts(&self) -> &[DataTypeId] {
-        std::slice::from_ref(&*IMAGE)
+        IMAGE
     }
     /// Its files hold a display's code values.
     fn display_referred(&self) -> bool {

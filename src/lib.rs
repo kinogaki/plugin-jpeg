@@ -19,7 +19,6 @@ use kinogaki_studio_api::{
     DataTypeId, Error, FileFormat, FormatId, FormatOptions, FormatWriter, Imported, Input, Package,
     PackageId, Reading, standard,
 };
-use std::sync::LazyLock;
 
 /// The package's id.
 pub fn id() -> PackageId {
@@ -37,7 +36,7 @@ pub fn package() -> Package {
 }
 
 /// What it reads and writes: the standard Image.
-static IMAGE: LazyLock<DataTypeId> = LazyLock::new(|| standard::image().id());
+const IMAGE: &[DataTypeId] = &[standard::image().id()];
 
 /// The format.
 pub struct Jpeg;
@@ -56,7 +55,7 @@ impl FileFormat for Jpeg {
         head.starts_with(&[0xFF, 0xD8, 0xFF])
     }
     fn produces(&self) -> &[DataTypeId] {
-        std::slice::from_ref(&*IMAGE)
+        IMAGE
     }
     fn read(
         &self,
