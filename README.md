@@ -8,7 +8,7 @@ The library crate is `kinogaki-jpeg-format`; `plugin/` (`kinogaki-plugin-jpeg`) 
 
 One layer, `""`: `Y` or `R G B` of 8-bit samples (CMYK and YCCK converted to RGB), tagged with the file's ICC profile, else nothing said. A file in memory (an embedded one) reads as one on disk.
 
-A file is read as the SDK's policy for untrusted files says (Studio's `docs/plugins/FORMAT.md`): its size (the budget's pixels, 2²⁸ by default), its coefficients (refused when the frame codes more blocks than the file has bits for, a bit a block at least) and its pixels are checked against the read's budget before they are allocated, as is the Image, and the decode polls the read's cancellation every row of blocks.
+A file is read as the SDK's policy for untrusted files says (the SDK's [Your first file format](https://github.com/kinogaki/studio-sdk/blob/main/docs/FIRST-FORMAT.md#reading-untrusted-files)): its size (the budget's pixels, 2²⁸ by default), its coefficients (refused when the frame codes more blocks than the file has bits for, a bit a block at least) and its pixels are checked against the read's budget before they are allocated, as is the Image, and the decode polls the read's cancellation every row of blocks.
 
 ## Writing
 
