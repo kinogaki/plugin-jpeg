@@ -35,7 +35,6 @@ mod headers;
 mod huffman;
 mod icc;
 mod idct;
-mod parallel;
 mod render;
 mod scan;
 
@@ -72,11 +71,10 @@ pub struct DecodeOptions {
     /// 1, 2, 4 or 8: decode at 1/`scale` of the full size, straight from
     /// the DCT (each pixel the mean of the full-size pixels it covers).
     pub scale: u8,
-    /// The most pixels (full size) a picture may have.
-    pub max_pixels: u64,
-    /// What the decode may spend, and its cancellation: the coefficients
-    /// and the pixels are charged to it before they are allocated, and the
-    /// entropy decoding polls it every row of blocks.
+    /// What the decode may spend, and its cancellation: the picture's size
+    /// (full size) against its pixels, the coefficients and the pixels
+    /// charged to it before they are allocated, and the entropy decoding
+    /// polls it every row of blocks.
     pub budget: ReadBudget,
 }
 
@@ -84,7 +82,6 @@ impl Default for DecodeOptions {
     fn default() -> Self {
         Self {
             scale: 1,
-            max_pixels: 1 << 30,
             budget: ReadBudget::default(),
         }
     }

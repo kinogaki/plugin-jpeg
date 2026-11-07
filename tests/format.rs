@@ -1,7 +1,6 @@
 //! The format through the SDK's contract: a file read as the codec
 //! decodes it and tagged with its profile, an Image written as the codec
 //! encodes it, and damaged files.
-mod common;
 
 use kinogaki_jpeg_format::Jpeg;
 use kinogaki_jpeg_format::jpeg::{self, DecodeOptions, EncodeOptions, Samples};
@@ -11,6 +10,7 @@ use kinogaki_studio_api::{
     FileFormat, FileItem, Imported, Input, Purpose, Reading, Units, Value, Writing, standard,
 };
 use kinogaki_studio_api_testing::Unconverted;
+use kinogaki_studio_api_testing::workers;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -85,9 +85,9 @@ fn a_file_reads_as_the_codec_decodes_it_on_any_workers() {
         let Samples::U8(pixels) = &decoded.samples else {
             panic!("8 bits")
         };
-        common::workers(1);
+        workers::install(1);
         let one = image(&Input::memory(name, &bytes));
-        common::workers(6);
+        workers::install(6);
         let many = image(&Input::file(&fixtures().join(name)));
         assert_eq!(one, many, "{name}");
         assert_eq!(one.plane(0).unwrap(), *pixels, "{name}");

@@ -12,9 +12,9 @@ mod transform;
 
 use crate::jpeg::Error;
 use crate::jpeg::headers::ZIGZAG;
-use crate::jpeg::parallel::map;
 use entropy::{BitWriter, Codes, Joiner, Spec};
 use kinogaki_image::{Image, Samples};
+use kinogaki_studio_api::geometry::parallel::map;
 
 /// Chroma resolution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

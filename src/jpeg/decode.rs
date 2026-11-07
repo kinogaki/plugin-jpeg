@@ -14,11 +14,11 @@ use crate::jpeg::coefficients::{Blocks, McuShape, Store};
 use crate::jpeg::color::Model;
 use crate::jpeg::headers::{Frame, Quantization, Reader, Scan, marker, parse_huffman};
 use crate::jpeg::huffman::{Bits, Table, next_marker};
-use crate::jpeg::parallel::map;
 use crate::jpeg::render::{self, Plan};
 use crate::jpeg::scan::{Cursor, Kind, ScanContext, Span, decode_mcus};
 use crate::jpeg::{DecodeOptions, Error};
 use kinogaki_studio_api::format::ReadBudget;
+use kinogaki_studio_api::geometry::parallel::map;
 use std::sync::Mutex;
 
 /// A decoded picture: 8-bit samples, `step` a pixel.
@@ -91,9 +91,7 @@ pub(crate) fn decode(data: &[u8], options: &DecodeOptions, rgba: bool) -> Result
                     return Err(Error::corrupt("second frame header", at));
                 }
                 let frame = Frame::parse(payload, start, code)?;
-                if frame.width as u64 * frame.height as u64 > options.max_pixels {
-                    return Err(Error::TooLarge);
-                }
+                budget.pixels(frame.width as u64, frame.height as u64)?;
                 let (width, height) = (frame.width.div_ceil(scale), frame.height.div_ceil(scale));
                 budget.allocate((width * height * step_of(&frame)) as u64)?;
                 s.progress = vec![[-1; 64]; frame.components.len()];

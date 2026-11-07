@@ -6,9 +6,10 @@
 //! multi-threaded decode's worth). `tests/fixtures/reference` holds libjpeg-turbo's
 //! decodes of them, full size and scaled (`tools/jpeg_oracle.py
 //! references`).
-mod common;
 
 use kinogaki_jpeg_format::jpeg::{DecodeOptions, Error, Image, Samples};
+use kinogaki_studio_api::format::{ReadBudget, ReadLimits};
+use kinogaki_studio_api_testing::workers;
 use std::path::{Path, PathBuf};
 
 fn fixtures() -> PathBuf {
@@ -93,10 +94,10 @@ fn workers_and_layouts_give_the_same_pixels() {
         "mt_restart.jpg",
     ] {
         let data = read(name);
-        common::workers(1);
+        workers::install(1);
         let one = kinogaki_jpeg_format::jpeg::decode(&data, &DecodeOptions::default()).unwrap();
         for threads in [2, 3, 16] {
-            common::workers(threads);
+            workers::install(threads);
             let many =
                 kinogaki_jpeg_format::jpeg::decode(&data, &DecodeOptions::default()).unwrap();
             assert_eq!(many, one, "{name} on {threads} threads");
@@ -147,15 +148,21 @@ fn bad_requests_are_refused() {
         ),
         Err(Error::Invalid("scale must be 1, 2, 4 or 8"))
     );
-    assert_eq!(
-        kinogaki_jpeg_format::jpeg::decode(
-            &data,
-            &DecodeOptions {
-                max_pixels: 64 * 49 - 1,
-                ..Default::default()
-            }
-        ),
-        Err(Error::TooLarge)
+    // More pixels than the read's budget takes.
+    let fewer = ReadBudget::new(ReadLimits {
+        pixels: 64 * 49 - 1,
+        ..ReadLimits::default()
+    });
+    let refused = kinogaki_jpeg_format::jpeg::decode(
+        &data,
+        &DecodeOptions {
+            budget: fewer,
+            ..Default::default()
+        },
+    );
+    assert!(
+        matches!(&refused, Err(Error::Budget(why)) if why.contains("64 × 49 pixels")),
+        "{refused:?}"
     );
 }
 

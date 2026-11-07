@@ -17,8 +17,6 @@ pub enum Error {
     Unsupported(&'static str),
     /// The request itself is wrong (scale, quality, image shape).
     Invalid(&'static str),
-    /// The image has more pixels than the caller allows.
-    TooLarge,
     /// The read's budget refused what the file asks: why.
     Budget(String),
     /// The decode was cancelled.
@@ -37,7 +35,6 @@ impl fmt::Display for Error {
             Error::Corrupt { what, at } => write!(f, "invalid JPEG at byte {at}: {what}"),
             Error::Unsupported(what) => write!(f, "unsupported JPEG: {what}"),
             Error::Invalid(what) => write!(f, "invalid JPEG request: {what}"),
-            Error::TooLarge => write!(f, "JPEG image exceeds the pixel limit"),
             Error::Budget(why) => write!(f, "JPEG image: {why}"),
             Error::Cancelled => write!(f, "JPEG decoding cancelled"),
         }

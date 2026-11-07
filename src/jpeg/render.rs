@@ -10,7 +10,7 @@ use crate::jpeg::coefficients::BandView;
 use crate::jpeg::color::{self, Axis, Model};
 use crate::jpeg::headers::{Frame, Quantization};
 use crate::jpeg::idct::{Scaled, idct8};
-use crate::jpeg::parallel::map;
+use kinogaki_studio_api::geometry::parallel::map;
 use std::sync::Mutex;
 
 /// One component's part of the plan.

@@ -2,11 +2,11 @@
 //! change the bytes, bad requests are refused. With
 //! `KINOGAKI_JPEG_ORACLE_DIR` set, each encoding is also written there with
 //! its source as PNG for `tools/jpeg_oracle.py check` (libjpeg-turbo).
-mod common;
 
 use kinogaki_jpeg_format::jpeg::{
     DecodeOptions, EncodeOptions, Error, Image, Samples, Subsampling,
 };
+use kinogaki_studio_api_testing::workers;
 
 /// A smooth picture with an edge and a little noise: JPEG's statistics.
 fn picture(width: u32, height: u32, channels: u8) -> Image {
@@ -128,10 +128,10 @@ fn workers_never_change_the_bytes() {
                 optimize,
                 ..Default::default()
             };
-            common::workers(1);
+            workers::install(1);
             let one = kinogaki_jpeg_format::jpeg::encode(&source, &options).unwrap();
             for threads in [2, 5, 16] {
-                common::workers(threads);
+                workers::install(threads);
                 assert_eq!(
                     kinogaki_jpeg_format::jpeg::encode(&source, &options).unwrap(),
                     one,

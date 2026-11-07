@@ -1,6 +1,6 @@
 # The JPEG codec
 
-`src/jpeg/` reads and writes JPEG files (ITU-T T.81 | ISO/IEC 10918-1, JFIF, Adobe's APP14 and the ICC's APP2 conventions) into and from lib-image's interleaved `Image`. It knows nothing of the SDK but the process's workers it runs its parallel steps on (`parallel.rs`).
+`src/jpeg/` reads and writes JPEG files (ITU-T T.81 | ISO/IEC 10918-1, JFIF, Adobe's APP14 and the ICC's APP2 conventions) into and from lib-image's interleaved `Image`. It knows nothing of the SDK but the process's workers it runs its parallel steps on (`parallel::map`) and the read's budget.
 
 ## Coverage
 
@@ -32,7 +32,6 @@ Not supported: arithmetic coding, lossless and hierarchical JPEG, 12-bit samples
 | `render.rs` | the plan (IDCT size, planes, sampling ratios per component) and its run: every band's IDCT, then every band's colors, each on the workers |
 | `decode.rs` | the marker walk and the three routes: restart intervals in parallel; a one-scan baseline frame decoded MCU row by MCU row; whole-plane scans |
 | `icc.rs` | APP2 ICC profile joining with libjpeg-turbo's rules |
-| `parallel.rs` | an ordered map on the process's workers |
 | `encode/mod.rs` | encoder API, frame, quantization tables (Annex K scaled as IJG), headers, rows on the workers joined in order |
 | `encode/transform.rs` | RGB → YCbCr, edge repetition, chroma averaging, exact float forward DCT, quantization |
 | `encode/entropy.rs` | Annex K Huffman tables, optimal tables (K.2), bit writer, the joiner (word-wide bit shifting, byte stuffing) |

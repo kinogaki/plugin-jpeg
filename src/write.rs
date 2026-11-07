@@ -103,7 +103,8 @@ impl FormatWriter for Writer {
         let named = |e: jpeg::Error| Error::invalid(format!("{}: {e}", path.display()));
         let bytes = jpeg::encode(&picture, &options).map_err(named)?;
         writing.check()?;
-        std::fs::write(path, bytes)
+        let all = |file: &mut std::fs::File| std::io::Write::write_all(file, &bytes);
+        (kinogaki_studio_api::format::files::replace(path, all))
             .map_err(|e| Error::invalid(format!("{}: {e}", path.display())))?;
         Ok(warnings)
     }

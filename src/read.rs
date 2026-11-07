@@ -5,9 +5,6 @@ use kinogaki_studio_api::{Error, FileItem, Imported, Input, Reading, standard};
 use std::path::Path;
 use std::sync::Arc;
 
-/// The most pixels a file may have (2²⁸).
-const MAX_PIXELS: u64 = 1 << 28;
-
 /// `input` as one item holding its Image, named after the file: decoded
 /// within the read's budget (its coefficients and pixels charged before
 /// they are allocated, the Image too), stopping when it is cancelled.
@@ -19,7 +16,6 @@ pub(crate) fn read(input: &Input<'_>, reading: &Reading<'_>) -> Result<Imported,
         e => Error::invalid(format!("{input}: {e}")),
     };
     let options = DecodeOptions {
-        max_pixels: MAX_PIXELS,
         budget: reading.budget.clone(),
         ..Default::default()
     };
