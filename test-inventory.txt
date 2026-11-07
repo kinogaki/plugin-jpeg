@@ -1,0 +1,30 @@
+# Every test of this repository: <package>/<target> <kind> <name>.
+# Written by `python3 tools/check_all.py --inventory`; every check compares its tests with it.
+kinogaki-jpeg-format/decode test bad_requests_are_refused
+kinogaki-jpeg-format/decode test every_fixture_decodes_as_libjpeg_turbo_does
+kinogaki-jpeg-format/decode test icc_profiles_join_as_libjpeg_turbo_joins_them
+kinogaki-jpeg-format/decode test info_reads_the_frame_header
+kinogaki-jpeg-format/decode test mutated_files_never_panic
+kinogaki-jpeg-format/decode test truncated_files_fail_cleanly
+kinogaki-jpeg-format/decode test unsupported_codings_say_so
+kinogaki-jpeg-format/decode test workers_and_layouts_give_the_same_pixels
+kinogaki-jpeg-format/doc test plugins/jpeg/src/jpeg/mod.rs - jpeg
+kinogaki-jpeg-format/encode test an_embedded_icc_profile_reads_back
+kinogaki-jpeg-format/encode test bad_requests_are_refused
+kinogaki-jpeg-format/encode test every_option_decodes_close_to_its_source
+kinogaki-jpeg-format/encode test optimized_tables_are_smaller_and_restarts_decode_in_parallel
+kinogaki-jpeg-format/encode test workers_never_change_the_bytes
+kinogaki-jpeg-format/format test a_damaged_or_truncated_file_is_an_error_naming_it
+kinogaki-jpeg-format/format test a_file_reads_as_the_codec_decodes_it_on_any_workers
+kinogaki-jpeg-format/format test alpha_and_a_named_space_are_said_and_left_out
+kinogaki-jpeg-format/format test an_image_writes_as_the_codec_encodes_it_with_its_profile
+kinogaki-jpeg-format/lib test jpeg::color::tests::models_follow_ids_and_the_adobe_transform
+kinogaki-jpeg-format/lib test jpeg::color::tests::two_to_one_is_the_triangle_filter
+kinogaki-jpeg-format/lib test jpeg::encode::entropy::tests::joining_shifts_and_stuffs
+kinogaki-jpeg-format/lib test jpeg::encode::entropy::tests::optimal_tables_fit_sixteen_bits_and_reserve_all_ones
+kinogaki-jpeg-format/lib test jpeg::encode::transform::tests::the_forward_dct_matches_its_definition
+kinogaki-jpeg-format/lib test jpeg::huffman::tests::extend_maps_magnitudes_to_signed_values
+kinogaki-jpeg-format/lib test jpeg::huffman::tests::oversubscribed_tables_are_refused
+kinogaki-jpeg-format/lib test jpeg::huffman::tests::stuffed_bytes_and_markers
+kinogaki-jpeg-format/lib test jpeg::idct::tests::matches_the_definition
+kinogaki-jpeg-format/lib test jpeg::idct::tests::scaled_points_are_means_of_full_size_points

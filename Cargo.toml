@@ -1,0 +1,31 @@
+[package]
+name = "kinogaki-jpeg-format"
+description = "JPEG as a format plugin on the Kinogaki Studio SDK: its codec (baseline and progressive decoding, baseline encoding, ICC profiles), a file read as one standard Image as it holds it, and an Image written as one JPEG"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+publish = false
+license = "MIT OR Apache-2.0"
+
+# The format builds from its own repository, the public SDK's and lib-image's
+# alone, checked out side by side as Studio's tree lays them out (README
+# "Building"): its manifest names everything it needs instead of inheriting
+# it from the tree.
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+
+[dependencies]
+kinogaki-studio-api = { path = "../../sdk/crates/api" }
+# The interleaved image the codec decodes to and encodes from (lib-image's).
+kinogaki-image = { path = "../../libs/lib-image/crates/image" }
+
+[dev-dependencies]
+# The SDK's color service that converts nothing.
+kinogaki-studio-api-testing = { path = "../../sdk/crates/api-testing" }
+# libjpeg-turbo's reference decodes are PNGs (lib-image's codec reads them).
+kinogaki-png = { path = "../../libs/lib-image/crates/png" }
