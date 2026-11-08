@@ -10,6 +10,7 @@ use kinogaki_studio_api::{
     FileFormat, FileItem, Imported, Input, Purpose, Reading, Units, Value, Writing, standard,
 };
 use kinogaki_studio_api_testing::Unconverted;
+use kinogaki_studio_api_testing::format::Scratch;
 use kinogaki_studio_api_testing::workers;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -37,9 +38,8 @@ fn written(image: &Image, quality: i64) -> (Vec<u8>, Vec<String>) {
     let writer = Jpeg.writer().unwrap();
     let mut options = writer.options();
     options.insert("quality".into(), Value::Integer(quality));
-    let dir = std::env::temp_dir().join(format!("kinogaki-jpeg-{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let path = dir.join(format!("{:?}.jpg", std::thread::current().id()));
+    let dir = Scratch::new("jpeg-format");
+    let path = dir.join("picture.jpg");
     let colors = Unconverted;
     let item = FileItem::top("picture", standard::image().wrap(image.clone()));
     let warnings = writer
@@ -51,7 +51,6 @@ fn written(image: &Image, quality: i64) -> (Vec<u8>, Vec<String>) {
         )
         .unwrap();
     let bytes = std::fs::read(&path).unwrap();
-    std::fs::remove_file(&path).unwrap();
     (bytes, warnings.into_iter().map(|w| w.message).collect())
 }
 
