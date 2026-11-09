@@ -51,6 +51,6 @@ pub(crate) fn read(input: &Input<'_>, reading: &Reading<'_>) -> Result<Imported,
         .map_or_else(String::new, |s| s.to_string_lossy().into_owned());
     Ok(Imported {
         items: vec![FileItem::top(name, standard::image().wrap(image))],
-        warnings: Vec::new(),
+        ..Imported::default()
     })
 }
